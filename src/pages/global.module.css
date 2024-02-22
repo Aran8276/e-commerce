@@ -1,0 +1,22 @@
+
+
+.customBtn {
+  @apply w-full h-8;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+.customBtn::after {
+  @apply border-b-[4.25px] border-red-500 w-full;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  transition: width .3s;
+}
+
+.customBtn.active::after {
+  @apply w-full;
+}
+
