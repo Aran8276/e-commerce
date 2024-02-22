@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import ProductCards from '../components/ProductCards'
-import QtySelect from '../components/QtySelect'
+import ProductCards from '../../components/ProductCards'
+import QtySelect from '../../components/QtySelect'
 import axios from 'axios'
-import BrandSelect from '../components/BrandSelect'
+import BrandSelect from '../../components/BrandSelect'
 import Link from 'next/link'
 
 type FormBody = {

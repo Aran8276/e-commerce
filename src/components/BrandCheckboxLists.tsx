@@ -1,4 +1,4 @@
-import SimpleCheckbox from '@/pages/components/SimpleCheckbox'
+import SimpleCheckbox from '@/components/SimpleCheckbox'
 import React from 'react'
 
 function BrandCheckboxLists() {
