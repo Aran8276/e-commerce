@@ -16,7 +16,7 @@ const ForgotPassword = () => {
     })
 
     const [email, setEmail] = useState('')
-    const [errors, setErrors] = useState([])
+    const [errors, setErrors]: any = useState([])
     const [status, setStatus] = useState(null)
 
     const submitForm: FormEventHandler = event => {
