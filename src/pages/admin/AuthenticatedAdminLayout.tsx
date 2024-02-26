@@ -1,9 +1,25 @@
 import React, { useState } from 'react'
 import ProductCards from '../../components/ProductCards'
 import QtySelect from '../../components/QtySelect'
-import axios from 'axios'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import BrandSelect from '../../components/BrandSelect'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+
+type SelfProps = {
+    isRoleEdit?: boolean
+    id?: number
+    name?: string
+    brand?: string
+    qty?: number
+    price?: number
+    is_discounted?: boolean
+    discount_value?: number
+    is_image_local?: boolean
+    image_value?: string
+    description?: string
+    specs?: string
+}
 
 type FormBody = {
     name: string
@@ -18,7 +34,7 @@ type FormBody = {
     specs: string
 }
 
-function AuthenticatedAdminLayout() {
+function AuthenticatedAdminLayout(props: SelfProps) {
     /* DB Query Definition
     'name' => $request->name,
     'brand' => $request->brand,
@@ -34,42 +50,57 @@ function AuthenticatedAdminLayout() {
 
     //Server-sided backend & CRUD Operations
 
-    const baseURL = 'http://localhost:8000/api/store'
+    const supabaseClient = useSupabaseClient()
     const [successAlert, setSuccessAlert] = useState(false)
     const [isButtonDisabled, setIsButtonDisabled] = useState(false)
-
-    const successAlertToggler = () => {
-        console.log('clicked')
-        setIsButtonDisabled(true)
-        setTimeout(() => {
-            setSuccessAlert(true)
-            setIsButtonDisabled(false)
-            setTimeout(() => {
-                setSuccessAlert(false)
-            }, 6000)
-        }, 3400)
-    }
-
-    const createPost = async (url: string, objectRequestHeader: FormBody) => {
-        try {
-            const response = await axios.post(url, objectRequestHeader, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-            })
-
-            return response.data
-        } catch (error) {
-            console.log(error)
-            return null
-        }
-    }
+    const route = useRouter()
 
     const submitHandler = (event: any) => {
         event.preventDefault()
+        let isImgLocalVar
+        let imgLinkVar = 'false'
 
-        successAlertToggler()
+        if (visibleDiv == 1) {
+            isImgLocalVar = true
+        } else {
+            isImgLocalVar = false
+            imgLinkVar = event.target.imgLink.value
+        }
+
+        async function createData() {
+            setIsButtonDisabled(true)
+            const { error } = await supabaseClient.from('product_list').insert({
+                name: event.target.productName.value,
+                brand: event.target.brand.value,
+                qty: event.target.qty.value,
+                price: parseInt(event.target.productPrice.value),
+                is_discounted: +isDiscount,
+                discount_value: parseInt(event.target.productDiscount.value),
+                is_image_local: +isImgLocalVar,
+                image_value: imgLinkVar,
+                description: event.target.desc.value,
+                specs: event.target.specs.value,
+            })
+
+            error
+                ? (alert(
+                      `Failed to insert table: ${error.message} Check console for more info`,
+                  ),
+                  console.log(error))
+                : false
+
+            setIsButtonDisabled(false)
+        }
+        createData()
+        setIsButtonDisabled(false)
+        setSuccessAlert(true)
+        setTimeout(() => {
+            setSuccessAlert(false)
+        }, 6000)
+    }
+
+    const editSubmitHandler = (event: any) => {
+        event.preventDefault()
 
         let isImgLocalVar
         let imgLinkVar = 'false'
@@ -81,33 +112,57 @@ function AuthenticatedAdminLayout() {
             imgLinkVar = event.target.imgLink.value
         }
 
-        const objectRequestBody: FormBody = {
-            name: event.target.productName.value,
-            brand: event.target.brand.value,
-            qty: event.target.qty.value,
-            price: event.target.productPrice.value,
-            isDiscounted: isDiscount,
-            discount: event.target.productDiscount.value,
-            isImgLocal: isImgLocalVar,
-            img: imgLinkVar,
-            desc: event.target.desc.value,
-            specs: event.target.specs.value,
-        }
+        async function updateData() {
+            const { error } = await supabaseClient
+                .from('product_list')
+                .update({
+                    name: event.target.productName.value,
+                    brand: event.target.brand.value,
+                    qty: event.target.qty.value,
+                    price: parseInt(event.target.productPrice.value),
+                    is_discounted: +isDiscount,
+                    discount_value: parseInt(
+                        event.target.productDiscount.value,
+                    ),
+                    is_image_local: +isImgLocalVar,
+                    image_value: imgLinkVar,
+                    description: event.target.desc.value,
+                    specs: event.target.specs.value,
+                })
+                .eq('id', props.id)
 
-        createPost(baseURL, objectRequestBody)
+            error
+                ? (alert(
+                      `Failed to insert table: ${error.message} Check console for more info`,
+                  ),
+                  console.log(error))
+                : false
+
+            setIsButtonDisabled(true)
+            route.push('/shop/product/' + props.id)
+        }
+        updateData()
     }
 
     //Client-sided backend
-    const [visibleDiv, setVisibleDiv] = useState(1)
+    const [visibleDiv, setVisibleDiv] = useState(
+        props.is_image_local ? (props.is_image_local == true ? 1 : 2) : 1,
+    )
 
-    const [titlePreview, setTitlePrev] = useState('Product Name')
-    const [pricePreview, setPricePrev] = useState(0)
+    const [titlePreview, setTitlePrev] = useState(
+        props.name ? props.name : 'Product Name',
+    )
+    const [pricePreview, setPricePrev] = useState(props.price ? props.price : 0)
 
     const [isDiscount, setDiscountBool] = useState(false)
     const [discountVal, setDiscountVal] = useState(0)
     const [discountSum, setDiscountSum] = useState(0)
 
-    const [srcPreview, setSrcPrev] = useState('http://via.placeholder.com/256')
+    const [srcPreview, setSrcPrev] = useState(
+        props.image_value
+            ? props.image_value
+            : 'http://via.placeholder.com/256',
+    )
 
     const inputNameHandler = (event: any) => {
         if (!event.target.value || event.target.value == '') {
@@ -153,10 +208,21 @@ function AuthenticatedAdminLayout() {
                     <div className="w-[58rem]  flex justify-center">
                         <div className="text-base w-[28rem] flex flex-col border-black mt-3">
                             <div className="flex justify-center text-2xl">
-                                <span className="">Add New Product</span>
+                                {props.isRoleEdit ? (
+                                    <span className="">
+                                        Edit Product {props.id}
+                                    </span>
+                                ) : (
+                                    <span className="">Add New Product</span>
+                                )}
                             </div>
                             <div className="mt-3">
-                                <form onSubmit={event => submitHandler(event)}>
+                                <form
+                                    onSubmit={
+                                        props.isRoleEdit
+                                            ? event => editSubmitHandler(event)
+                                            : event => submitHandler(event)
+                                    }>
                                     <div className="flex flex-col ">
                                         <input
                                             id="productName"
@@ -173,6 +239,7 @@ function AuthenticatedAdminLayout() {
                                             }
                                             placeholder="Product Name"
                                             className=" w-full px-3 py-2 rounded-md"
+                                            defaultValue={props.name}
                                         />
                                         <div className="flex justify-evenly space-x-8 mt-3">
                                             <div className="w-full">
@@ -201,6 +268,9 @@ function AuthenticatedAdminLayout() {
                                                             type="number"
                                                             placeholder="Price"
                                                             className="z-0 relative bottom-[4px] left-2 w-full px-1 py-[0.2rem] rounded-md"
+                                                            defaultValue={
+                                                                props.price
+                                                            }
                                                         />
                                                     </span>
                                                 </div>
@@ -271,6 +341,9 @@ function AuthenticatedAdminLayout() {
                                                         }
                                                         placeholder="Image Link"
                                                         className=" w-full px-3 py-2 rounded-md"
+                                                        defaultValue={
+                                                            props.image_value
+                                                        }
                                                     />
                                                 </div>
                                             )}
@@ -292,6 +365,7 @@ function AuthenticatedAdminLayout() {
                                                         'This field is required and cannot be empty.',
                                                     )
                                                 }
+                                                defaultValue={props.description}
                                                 className="h-[15rem] w-full text-sm rounded-md"></textarea>
                                         </div>
 
@@ -312,6 +386,7 @@ function AuthenticatedAdminLayout() {
                                                         'This field is required and cannot be empty.',
                                                     )
                                                 }
+                                                defaultValue={props.specs}
                                                 className="h-[10rem] w-full text-sm rounded-md"></textarea>
                                         </div>
 

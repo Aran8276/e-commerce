@@ -1,15 +1,18 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Header from '../../components/Header'
 import { useAuth } from '@/hooks/auth'
 import Footer from '../../components/Footer'
 import AuthenticatedAdminLayout from './AuthenticatedAdminLayout'
 import PageExceptionAlt from '@/components/Layouts/PageExceptionAlt'
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useRouter } from 'next/router'
 
 function index() {
-    const { user } = useAuth({ middleware: 'auth' })
+    const user = useUser()
+    const router = useRouter()
 
     if (user) {
-        if (user.isAdmin) {
+        if (user) {
             return (
                 <div>
                     <Header currentNav="admin" />
@@ -27,7 +30,9 @@ function index() {
             )
         }
     } else {
-        return <></>
+        return useEffect(() => {
+            router.push('/login')
+        }, [])
     }
 }
 

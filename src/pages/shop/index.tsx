@@ -6,29 +6,30 @@ import Footer from '../../components/Footer'
 import BrandCheckboxLists from '@/components/BrandCheckboxLists'
 import CategoryList from '@/components/CategoryList'
 import ProductCards from '../../components/ProductCards'
-import ProductListIndexTest from '@/components/ProductListIndexTest'
-import axios from 'axios'
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 
 function index() {
-    const [JsonIndex, setJsonIndex] = useState([])
     const [value, setValue] = useState(50)
-    const baseURL = 'http://localhost:8000/api/index'
+    const supabaseClient = useSupabaseClient()
+    const [data, setData] = useState(
+        [],
+    ) /* Constant state 'data' will be returned as the JSON object retrieved from the server */
 
-    const fetchData = async (url: string) => {
-        try {
-            const response = await axios.get(url)
-            setJsonIndex(response.data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
+    /* Fetch data from supabase server (specifically 'product_list') and useable through 'data' state constant (RETURNS AS AN ARRAY) */
     useEffect(() => {
-        fetchData(baseURL)
-        console.log(JsonIndex)
+        async function fetchData() {
+            const { data: product_list } = await supabaseClient
+                .from('product_list') /* SQL Query Action */
+                .select() /* SQL Query Action */
 
-        // console.log(responseData);
+            setData(
+                product_list,
+            ) /* 'product_list' is the object retrieved from the server, and this code stores to the 'data' state constant */
+        }
+        fetchData()
     }, [])
+    /* Fetch data from supabase server (specifically 'product_list') and useable through 'data' state constant (RETURNS AS AN ARRAY)*/
 
     return (
         <>
@@ -140,8 +141,8 @@ function index() {
                                     <div className="grid grid-cols-5 gap-y-16 gap-x-6 mt-12">
                                         {' '}
                                         {/*Main Product Lists*/}
-                                        {JsonIndex ? (
-                                            JsonIndex.map(
+                                        {data ? (
+                                            data.map(
                                                 (item: any, index: number) => {
                                                     return (
                                                         <ProductCards

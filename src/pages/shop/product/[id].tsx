@@ -3,81 +3,101 @@ import Header from '@/components/Header'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import s from '@/pages/global.module.css'
-import axios from 'axios'
 import { useRouter } from 'next/router'
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 
 function index() {
     const [visibleDiv, setVisibleDiv] = useState(1)
-    const [JsonIndex, setJsonIndex]: any = useState({})
-    const [JsonIndex2, setJsonIndex2]: any = useState({})
-    const baseURL = 'http://localhost:8000/api/index/'
-    const basketStoreURL = 'http://localhost:8000/api/basket/index'
-    const basketFetchURL = 'http://localhost:8000/api/basket/index'
     const router = useRouter()
+    const user = useUser()
+    const supabaseClient = useSupabaseClient()
+    const [data, setData]: any = useState([])
+    const [data2, setData2]: any = useState([])
     let id: any
 
-    const createPost = async (url: string, objectRequestHeader: object) => {
-        try {
-            const response = await axios.post(url, objectRequestHeader, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-            })
+    // const createPost = async (url: string, objectRequestHeader: object) => {
+    //     try {
+    //         const response = await axios.post(url, objectRequestHeader, {
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 Accept: 'application/json',
+    //             },
+    //         })
 
-            // if (response.status === 200) {
-            //     router.push('/shop/cart')
-            // }
+    //         // if (response.status === 200) {
+    //         //     router.push('/shop/cart')
+    //         // }
 
-            return response.data
-        } catch (error) {
-            console.log(error)
-            return null
+    //         return response.data
+    //     } catch (error) {
+    //
+    //         return null
+    //     }
+    // }
+
+    useEffect(() => {
+        const url = new URL(window.location.href)
+        const segments = url.pathname.split('/')
+        id = segments.pop() || segments.pop()
+
+        async function fetchData() {
+            const { data: product_list } =
+                await supabaseClient /* SQL Query Action (Select from 'product_list' where 'id' is equal to JS variable id) */
+                    .from('product_list')
+                    .select()
+                    .eq('id', id)
+
+            setData(product_list)
         }
-    }
+        fetchData()
+        async function fetchBasketData() {
+            const { data: product_list } =
+                await supabaseClient /* SQL Query Action (Select from 'product_list' where 'id' is equal to JS variable id) */
+                    .from('product_list')
+                    .select()
+                    .eq('id', id)
 
-    const fetchData = async (url: string) => {
-        try {
-            const response = await axios.get(url)
-            setJsonIndex(response.data)
-        } catch (error) {
-            console.log(error)
+            setData2(product_list)
         }
-    }
+        fetchData()
+        fetchBasketData()
+    }, [])
 
-    const fetchBasketData = async (url: string) => {
-        try {
-            const response = await axios.get(url)
-            setJsonIndex2(response.data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
+    /* Object Retriever (Replace id with the JSON property name)*/
+    // data.length > 0 ?
 
+    //
+
+    // const fetchData = async (url: string) => {
+    //     try {
+    //         const response = await axios.get(url)
+    //         setData(response.data)
+    //     } catch (error) {
+    //
+    //     }
+    // }
+    // const fetchBasketData = async (url: string) => {
+    //     try {
+    //         const response = await axios.get(url)
+    //         setData2(response.data)
+    //     } catch (error) {
+    //
+    //     }
+    // }
     const cartHandler = () => {
         //Basically doing a CRUD operations with JSON
         let url = new URL(window.location.href)
         let segments = url.pathname.split('/')
         id = segments.pop() || segments.pop()
         id = parseInt(id)
-        let formArrayObject: any = JSON.parse(JsonIndex2.data[0].basket)
-        // console.log(formArrayObject);
+        let formArrayObject: any = JSON.parse(data2.data[0].basket)
+        //
 
         formArrayObject.push({
             productId: id,
             qty: 1,
         })
-
-        console.log(formArrayObject)
     }
-
-    useEffect(() => {
-        let url = new URL(window.location.href)
-        let segments = url.pathname.split('/')
-        id = segments.pop() || segments.pop()
-        fetchData(baseURL + id)
-        fetchBasketData(basketFetchURL)
-    }, [])
 
     return (
         <>
@@ -87,11 +107,9 @@ function index() {
                     <div className="w-[30rem]">
                         <img
                             src={
-                                Object.keys(JsonIndex).length === 0 ? (
-                                    <></>
-                                ) : (
-                                    JsonIndex.image_value
-                                )
+                                data.length > 0
+                                    ? data[0].image_value
+                                    : 'http://via.placeholder.com/640'
                             }
                         />
                     </div>
@@ -100,25 +118,46 @@ function index() {
                         <div className="flex flex-col">
                             <div className="text-3xl text-left">
                                 <span>
-                                    {Object.keys(JsonIndex).length === 0 ? (
-                                        <></>
+                                    {data.length > 0 ? (
+                                        data[0].name
                                     ) : (
-                                        JsonIndex.name
+                                        <>Failed to load title</>
                                     )}
                                 </span>
                             </div>
-
                             <div className="text-sm text-green-500 font-bold text-left mt-1">
                                 <span>
-                                    {Object.keys(JsonIndex).length === 0 ? (
-                                        <></>
+                                    {data.length > 0 ? (
+                                        `${data[0].qty} `
                                     ) : (
-                                        JsonIndex.qty
-                                    )}{' '}
+                                        <>0 </>
+                                    )}
                                     left in stock
                                 </span>
                             </div>
 
+                            {user ? (
+                                <div className="flex space-x-3 mt-2">
+                                    <Link
+                                        href={
+                                            '/admin/edit/' +
+                                            (data.length > 0 ? data[0].id : '')
+                                        }
+                                        className="bg-green-500 px-3 rounded-full text-white">
+                                        EDIT
+                                    </Link>
+                                    <Link
+                                        href={
+                                            '/admin/delete/' +
+                                            (data.length > 0 ? data[0].id : '')
+                                        }
+                                        className="bg-red-500 px-3 rounded-full text-white">
+                                        DELETE
+                                    </Link>
+                                </div>
+                            ) : (
+                                <></>
+                            )}
                             <div className="flex flex-col mt-5">
                                 <div className="flex justify-evenly w-full font-bold text-center">
                                     <button
@@ -145,11 +184,13 @@ function index() {
                                     {visibleDiv === 1 && (
                                         <div className="w-[26rem] text-justify mt-3">
                                             <span>
-                                                {Object.keys(JsonIndex)
-                                                    .length === 0 ? (
-                                                    <></>
+                                                {data.length > 0 ? (
+                                                    data[0].description
                                                 ) : (
-                                                    JsonIndex.description
+                                                    <>
+                                                        Failed to load
+                                                        description
+                                                    </>
                                                 )}
                                             </span>
                                         </div>
@@ -158,11 +199,13 @@ function index() {
                                     {visibleDiv === 2 && (
                                         <div className="w-[26rem] text-justify mt-3">
                                             <span>
-                                                {Object.keys(JsonIndex)
-                                                    .length === 0 ? (
-                                                    <></>
+                                                {data.length > 0 ? (
+                                                    data[0].specs
                                                 ) : (
-                                                    JsonIndex.specs
+                                                    <>
+                                                        No specifications
+                                                        available
+                                                    </>
                                                 )}
                                             </span>
                                         </div>
@@ -174,10 +217,10 @@ function index() {
                                 <div className="font-bold text-xl">
                                     <span>
                                         $
-                                        {Object.keys(JsonIndex).length === 0 ? (
-                                            <></>
+                                        {data.length > 0 ? (
+                                            data[0].price
                                         ) : (
-                                            JsonIndex.price
+                                            <>0</>
                                         )}
                                     </span>
                                 </div>

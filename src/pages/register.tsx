@@ -8,30 +8,41 @@ import { useAuth } from '@/hooks/auth'
 import { useState, FormEventHandler } from 'react'
 import Head from 'next/head'
 import PrimaryButton from '@/components/PrimaryButton'
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/router'
 
 const Register = () => {
-    const { register } = useAuth({
-        middleware: 'guest',
-        redirectIfAuthenticated: '/dashboard',
-    })
+    const register = async (name: string, email: string, password: string) => {
+        const { error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    display_name: name,
+                },
+            },
+        })
 
-    const [name, setName] = useState('')
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [passwordConfirmation, setPasswordConfirmation] = useState('')
-    const [errors, setErrors] = useState([])
+        router.push('/')
+    }
+
+    const [name, setName]: any = useState('')
+    const [email, setEmail]: any = useState('')
+    const [password, setPassword]: any = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+
+    const [errors, setErrors]: any = useState([])
+    const router = useRouter()
+    const supabase = createPagesBrowserClient()
 
     const submitForm: FormEventHandler = event => {
         event.preventDefault()
-
-        register({
-            name,
-            email,
-            password,
-            password_confirmation: passwordConfirmation,
-            setErrors,
-            setStatus: () => { }
-        })
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!')
+            return
+        } else {
+            register(name, email, password)
+        }
     }
 
     return (
@@ -88,7 +99,10 @@ const Register = () => {
                             autoComplete="new-password"
                         />
 
-                        <InputError messages={errors.password} className="mt-2" />
+                        <InputError
+                            messages={errors.password}
+                            className="mt-2"
+                        />
                     </div>
 
                     {/* Confirm Password */}
@@ -100,15 +114,18 @@ const Register = () => {
                         <Input
                             id="passwordConfirmation"
                             type="password"
-                            value={passwordConfirmation}
+                            value={confirmPassword}
                             className="block mt-1 w-full"
                             onChange={event =>
-                                setPasswordConfirmation(event.target.value)
+                                setConfirmPassword(event.target.value)
                             }
                             required
                         />
 
-                        <InputError messages={errors.password_confirmation} className="mt-2" />
+                        <InputError
+                            messages={errors.password_confirmation}
+                            className="mt-2"
+                        />
                     </div>
 
                     <div className="flex items-center justify-end mt-4">

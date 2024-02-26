@@ -11,23 +11,20 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Checkbox from '@/components/Checkbox'
 import PrimaryButton from '@/components/PrimaryButton'
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 
 const Login = () => {
     const { query } = useRouter()
-
-    const { login } = useAuth({
-        middleware: 'guest',
-        redirectIfAuthenticated: '/dashboard',
-    })
-
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const router = useRouter()
+    const [email, setEmail]: any = useState('')
+    const [password, setPassword]: any = useState('')
     const [shouldRemember, setShouldRemember] = useState(false)
-    const [errors, setErrors] = useState([])
-    const [status, setStatus] = useState<string | null>(null)
+    const [errors, setErrors]: any = useState([])
+    const [status, setStatus]: any = useState<string | null>(null)
+    const supabase = createPagesBrowserClient()
 
     useEffect(() => {
-        const reset = query && query.reset ? query.reset as string : ''
+        const reset = query && query.reset ? (query.reset as string) : ''
         if (reset.length > 0 && errors.length === 0) {
             setStatus(atob(reset))
         } else {
@@ -35,22 +32,28 @@ const Login = () => {
         }
     })
 
-    const submitForm: FormEventHandler = async (event) => {
-        event.preventDefault()
-
-        login({
+    const signIn = async (email: string, password: string) => {
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
-            remember: shouldRemember,
-            setErrors,
-            setStatus,
         })
+
+        if (error) {
+        }
+
+        return router.push('/')
+    }
+
+    const submitForm: FormEventHandler = async event => {
+        event.preventDefault()
+
+        signIn(email, password)
     }
 
     return (
         <GuestLayout>
             <Head>
-                <title>Laravel - Login</title>
+                <title>Login</title>
             </Head>
             <AuthCard>
                 {/* Session Status */}
@@ -88,7 +91,10 @@ const Login = () => {
                             autoComplete="current-password"
                         />
 
-                        <InputError messages={errors.password} className="mt-2" />
+                        <InputError
+                            messages={errors.password}
+                            className="mt-2"
+                        />
                     </div>
 
                     {/* Remember Me */}
@@ -96,7 +102,6 @@ const Login = () => {
                         <label
                             htmlFor="remember_me"
                             className="inline-flex items-center">
-
                             <Checkbox
                                 id="remember_me"
                                 name="remember"
@@ -111,11 +116,16 @@ const Login = () => {
                         </label>
                     </div>
 
-                    <div className="flex items-center justify-end mt-4">
+                    <div className="flex items-center space-x-3 justify-end mt-4">
                         <Link
                             href="/forgot-password"
                             className="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
                             Forgot your password?
+                        </Link>
+                        <Link
+                            href="/register"
+                            className="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                            Not registered yet?
                         </Link>
 
                         <PrimaryButton className="ml-4">Login</PrimaryButton>

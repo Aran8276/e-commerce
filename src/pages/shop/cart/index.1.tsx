@@ -17,9 +17,7 @@ export function index() {
         try {
             const response = await axios.get(url)
             setJsonIndex(response.data)
-        } catch (error) {
-            console.log(error)
-        }
+        } catch (error) {}
     }
 
     const updateTotalPrice = (productId: number, productPrice: number) => {
@@ -105,7 +103,7 @@ export function index() {
                         />
 
                         {/* {
-              JsonIndex? (Object.keys(JsonIndex).length > 0) ? <>{console.log(JsonIndex)}</> : <></> : <></>
+              JsonIndex? (Object.keys(JsonIndex).length > 0) ? <>{
             } */}
                     </div>
 
