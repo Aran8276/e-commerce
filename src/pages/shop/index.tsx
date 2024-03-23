@@ -52,6 +52,7 @@ function index() {
                             src="https://clan.akamai.steamstatic.com/images//39049601/e54b85b6e75bc7ec589372474ef1705b3471bb66.png"
                             prodTitleTop="STEAM"
                             prodTitleBtm="DECK"
+                            customImgStyle=" w-3 "
                             isNotSummerSale={true}
                             prodName=""
                             prodDesc=""
