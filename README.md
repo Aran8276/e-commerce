@@ -10,7 +10,7 @@ Welcome to my first attempt at creating a proper front-end website project from 
 - Web Preview
 ## Introduction
 
-This project is an e-commerce website designed to showcase various products with a modern and responsive design. It includes features such as product listings, promotional deals, and social media integration.
+This project is an e-commerce website designed to showcase various products with a modern design. It includes features such as product listings, promotional deals, and social media integration.
 
 ## Features
 
